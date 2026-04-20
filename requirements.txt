@@ -1,0 +1,21 @@
+# AeroTriage 2026 — offline-first medical triage
+fastapi>=0.100.0
+uvicorn[standard]>=0.22.0
+langgraph>=0.0.20
+langchain>=0.1.0
+langchain-community>=0.0.20
+langchain-text-splitters>=0.0.1
+chromadb>=0.4.0
+redis>=4.5.0
+pypdf>=3.0.0
+requests>=2.28.0
+python-multipart>=0.0.6
+
+# RAG: PDF loader
+PyPDF2>=3.0.0
+
+# Voice (optional): local Whisper v3. Requires ffmpeg for some formats.
+faster-whisper>=1.0.0
+
+# Symptom grouping: embedding-based match (pulls in PyTorch)
+sentence-transformers>=2.2.0

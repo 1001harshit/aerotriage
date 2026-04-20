@@ -1,0 +1,51 @@
+# Node.js dependencies
+node_modules/
+
+# Python compiled files
+*.pyc
+__pycache__/
+
+# Environment variables
+.env
+
+# macOS system files
+.DS_Store
+
+# Logs
+*.log
+
+# SQLite database
+*.sqlite3
+
+# Build output
+admin/.next/
+admin/out/
+
+# Tailwind CSS cache
+admin/.tailwindcsscache/
+
+# Coverage reports
+coverage/
+
+# Temporary files
+*.tmp
+*.temp
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Python virtual environment
+venv/
+
+# Test artifacts
+*.pytest_cache/
+
+# Miscellaneous
+*.bak
+*.orig
+*.rej
+*.sublime-workspace
+*.sublime-project
