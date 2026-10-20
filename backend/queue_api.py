@@ -6,8 +6,9 @@ When priorities tie, orders by arrival_time ascending (FIFO: oldest first = posi
 from datetime import datetime, timezone
 from typing import Optional, Tuple
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from backend import database
+from backend.security import require_admin
 
 AGING_FACTOR = 0.05
 DISPLAY_WAIT_MIN_MINUTES = 10
@@ -16,7 +17,8 @@ PRIORITY_SORT_ROUND = 1
 # Average minutes per patient for expected wait estimate
 AVG_CONSULTATION_MINUTES = 5
 
-router = APIRouter()
+# Every route here exposes or changes patient data, so all of them are staff-only.
+router = APIRouter(dependencies=[Depends(require_admin)])
 
 
 def _parse_iso(s: str) -> datetime:

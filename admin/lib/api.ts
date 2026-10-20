@@ -1,5 +1,10 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
+// Must match ADMIN_API_KEY on the backend. It ships in the browser bundle, so
+// it keeps strangers off the API but is not a substitute for staff login.
+const ADMIN_KEY = process.env.NEXT_PUBLIC_ADMIN_API_KEY || "";
+const adminHeaders: Record<string, string> = ADMIN_KEY ? { "X-Admin-Key": ADMIN_KEY } : {};
+
 export type QueueEntry = {
   patient_id: number;
   priority: number;
@@ -30,25 +35,25 @@ export type Stats = {
 };
 
 export async function fetchQueue(): Promise<QueueEntry[]> {
-  const r = await fetch(`${API_BASE}/queue`);
+  const r = await fetch(`${API_BASE}/queue`, { headers: adminHeaders });
   if (!r.ok) throw new Error("Failed to fetch queue");
   return r.json();
 }
 
 export async function fetchReasoning(patientId: number): Promise<ReasoningResponse> {
-  const r = await fetch(`${API_BASE}/patients/${patientId}/reasoning`);
+  const r = await fetch(`${API_BASE}/patients/${patientId}/reasoning`, { headers: adminHeaders });
   if (!r.ok) throw new Error("Failed to fetch reasoning");
   return r.json();
 }
 
 export async function fetchStats(): Promise<Stats> {
-  const r = await fetch(`${API_BASE}/stats`);
+  const r = await fetch(`${API_BASE}/stats`, { headers: adminHeaders });
   if (!r.ok) throw new Error("Failed to fetch stats");
   return r.json();
 }
 
 export async function completeFirst(): Promise<{ completed: QueueEntry; message: string }> {
-  const r = await fetch(`${API_BASE}/queue/complete-first`, { method: "POST" });
+  const r = await fetch(`${API_BASE}/queue/complete-first`, { method: "POST", headers: adminHeaders });
   if (!r.ok) {
     const err = await r.json().catch(() => ({}));
     throw new Error(err.detail || "Failed to complete first");
@@ -59,7 +64,7 @@ export async function completeFirst(): Promise<{ completed: QueueEntry; message:
 export async function reclassify(patientId: number, severity: number): Promise<{ patient_id: number; severity: number; queue_position: number | null }> {
   const r = await fetch(`${API_BASE}/patients/${patientId}/reclassify`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...adminHeaders },
     body: JSON.stringify({ severity }),
   });
   if (!r.ok) {
@@ -71,5 +76,6 @@ export async function reclassify(patientId: number, severity: number): Promise<{
 
 export function wsQueueUrl(): string {
   const base = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-  return base.replace(/^http/, "ws") + "/ws/queue";
+  const query = ADMIN_KEY ? `?key=${encodeURIComponent(ADMIN_KEY)}` : "";
+  return base.replace(/^http/, "ws") + "/ws/queue" + query;
 }

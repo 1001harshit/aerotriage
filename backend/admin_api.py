@@ -1,10 +1,12 @@
 """Admin API: reasoning transparency, reclassify, stats for dashboard."""
 import json
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from backend import database
+from backend.security import require_admin
 from backend.queue_api import get_queue_entries
 
-router = APIRouter()
+# Every route here exposes or changes patient data, so all of them are staff-only.
+router = APIRouter(dependencies=[Depends(require_admin)])
 
 
 @router.get("/patients/{patient_id}/reasoning")

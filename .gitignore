@@ -14,8 +14,9 @@ __pycache__/
 # Logs
 *.log
 
-# SQLite database
+# SQLite database (holds patient names and phone numbers; never commit it)
 *.sqlite3
+*.db
 
 # Build output
 admin/.next/
@@ -49,3 +50,5 @@ venv/
 *.rej
 *.sublime-workspace
 *.sublime-project
+# TypeScript incremental build cache
+*.tsbuildinfo
