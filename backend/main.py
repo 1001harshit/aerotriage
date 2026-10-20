@@ -1,6 +1,6 @@
 import asyncio
 import json
-from fastapi import FastAPI, UploadFile, File, WebSocket, WebSocketDisconnect, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, WebSocket, WebSocketDisconnect, Form, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from orchestration.triage_graph import triage_graph
 
@@ -24,6 +24,7 @@ from backend.websocket_manager import ws_manager
 from backend.symptom_grouping import get_symptom_group
 from backend.rag_expected_time import get_expected_time_from_rag
 from backend.confirm_session import create_session, get_session, delete_session
+from backend.security import verify_twilio_request, websocket_admin_ok
 
 app.include_router(queue_router)
 app.include_router(admin_router)
@@ -156,7 +157,7 @@ async def triage_confirm(data: dict):
 
 
 # WhatsApp webhook: use your direct webhook URL. Reply is returned in TwiML (no Twilio REST API / SID / auth).
-@app.post("/webhooks/whatsapp")
+@app.post("/webhooks/whatsapp", dependencies=[Depends(verify_twilio_request)])
 async def whatsapp_webhook(
     Body: str = Form(None, alias="Body"),
     ButtonText: str = Form(None, alias="ButtonText"),
@@ -197,6 +198,9 @@ def _escape_xml(s: str) -> str:
 @app.websocket("/ws/queue")
 async def websocket_queue(websocket: WebSocket):
     """Live queue updates for admin dashboard. Sends { type: 'queue_update', queue: [...] } on connect and on every triage/complete-first."""
+    if not websocket_admin_ok(websocket):
+        await websocket.close(code=1008)
+        return
     await ws_manager.connect(websocket)
     try:
         await websocket.send_json({"type": "queue_update", "queue": get_queue_entries()})
@@ -226,7 +230,8 @@ async def voice_triage(audio: UploadFile = File(...)):
     rag_sources = result.get("rag_sources") or []
 
     group = get_symptom_group(text)
-    group_wait = get_wait_time(group)
+    # Same doctor-time estimate as the text /triage path.
+    group_wait, _ = get_expected_time_from_rag(text)
     virtual_wait = get_expected_wait_for_new_patient(severity, group_wait_minutes=0)
     display_minutes, wait_label = get_display_wait(virtual_wait, min_minutes=10)
 

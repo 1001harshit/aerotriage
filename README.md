@@ -34,6 +34,27 @@ uvicorn backend.main:app --reload
 - **WebSocket /ws/queue** — Live queue updates for admin dashboard.
 - **POST /webhooks/whatsapp** — Twilio WhatsApp: send `Body` (symptoms) and `From`; returns TwiML with queue position and expected wait. See `docs/WHATSAPP.md`.
 
+## Security
+
+The backend stores patient names, phone numbers and symptoms, so lock it down before it is reachable from anywhere but your own machine:
+
+| Variable | Effect |
+|---|---|
+| `ADMIN_API_KEY` | Staff routes (`/queue`, `/queue/complete-first`, `/stats`, `/patients/*`) require it in an `X-Admin-Key` header, and `/ws/queue` requires it as `?key=`. Unset = open (local dev only; a warning is logged at startup). |
+| `NEXT_PUBLIC_ADMIN_API_KEY` | Set in `admin/.env.local` to the same value so the dashboard can call those routes. |
+| `TWILIO_AUTH_TOKEN` | `/webhooks/whatsapp` rejects requests without a valid `X-Twilio-Signature`. |
+| `PUBLIC_WEBHOOK_URL` | The exact URL configured in Twilio (e.g. your ngrok URL + `/webhooks/whatsapp`). Needed behind a proxy or tunnel, because the signature covers the URL Twilio called. |
+
+The admin key ships in the dashboard's browser bundle, so it keeps strangers off the API but is not a replacement for real staff login.
+
+`data/aerotriage.db` is created on first run and is git-ignored. Never commit it.
+
+## Tests
+
+```bash
+python -m unittest discover -s tests -t .
+```
+
 ## Data
 
 - SQLite: `data/aerotriage.db` (patients and queue history).
